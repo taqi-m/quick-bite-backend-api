@@ -99,8 +99,6 @@ Gemini is AI and can make mistakes.
 node_modules/
 jspm_packages/
 
-# Local data files
-data/*.json
 
 # Logs
 logs

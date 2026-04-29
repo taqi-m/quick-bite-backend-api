@@ -1,0 +1,22 @@
+[
+  {
+    "itemID": 1,
+    "restaurantID": 1,
+    "name": "Sushi Roll",
+    "description": "Fresh sushi",
+    "imageUrl": "https://example.com/item1.jpg",
+    "typeLabel": "NON-VEG",
+    "price": 12,
+    "itemRating": 4.6
+  },
+  {
+    "itemID": 2,
+    "restaurantID": 2,
+    "name": "Paneer Curry",
+    "description": "Delicious curry",
+    "imageUrl": "https://example.com/item2.jpg",
+    "typeLabel": "VEG",
+    "price": 10,
+    "itemRating": 4.4
+  }
+]

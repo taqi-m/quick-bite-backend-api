@@ -1,0 +1,18 @@
+[
+  {
+    "restaurantID": 1,
+    "name": "Sushi House",
+    "imageUrl": "https://example.com/sushi.jpg",
+    "category": "JAPANESE",
+    "rating": 4.5,
+    "deliveryTime": 30
+  },
+  {
+    "restaurantID": 2,
+    "name": "Spice Hub",
+    "imageUrl": "https://example.com/indian.jpg",
+    "category": "INDIAN",
+    "rating": 4.2,
+    "deliveryTime": 40
+  }
+]
