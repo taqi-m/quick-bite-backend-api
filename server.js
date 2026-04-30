@@ -28,10 +28,27 @@ const writeData = (path, data) => {
 };
 
 /* =========================
+   UTILS
+========================= */
+const calculateTotalAmount = (itemsMap, itemsList) => {
+  let total = 0;
+
+  for (let itemID in itemsMap) {
+    const quantity = itemsMap[itemID];
+    const item = itemsList.find((i) => i.itemID == itemID);
+
+    if (item) {
+      total += item.price * quantity;
+    }
+  }
+
+  return total;
+};
+
+/* =========================
    AUTH (Dummy)
 ========================= */
 
-// Register
 app.post("/api/auth/register", (req, res) => {
   const users = readData(USERS_PATH);
 
@@ -47,7 +64,6 @@ app.post("/api/auth/register", (req, res) => {
   res.json(user);
 });
 
-// Login
 app.post("/api/auth/login", (req, res) => {
   const users = readData(USERS_PATH);
 
@@ -103,19 +119,28 @@ app.get("/api/items/restaurant/:restaurantID", (req, res) => {
 });
 
 /* =========================
-   CART (CRUD)
+   CART (CRUD + TOTAL)
 ========================= */
 
-// Get Cart
 app.get("/api/cart/:userID", (req, res) => {
   const carts = readData(CARTS_PATH);
+  const itemsList = readData(ITEMS_PATH);
+
   const cart = carts.find((c) => c.userID == req.params.userID);
-  res.json(cart || { userID: req.params.userID, items: {} });
+
+  if (!cart) {
+    return res.json({ userID: req.params.userID, items: {}, totalAmount: 0 });
+  }
+
+  const totalAmount = calculateTotalAmount(cart.items, itemsList);
+
+  res.json({ ...cart, totalAmount });
 });
 
-// Add/Update Item
 app.post("/api/cart/:userID", (req, res) => {
   let carts = readData(CARTS_PATH);
+  const itemsList = readData(ITEMS_PATH);
+
   let cart = carts.find((c) => c.userID == req.params.userID);
 
   if (!cart) {
@@ -127,12 +152,16 @@ app.post("/api/cart/:userID", (req, res) => {
   cart.items[itemID] = quantity;
 
   writeData(CARTS_PATH, carts);
-  res.json(cart);
+
+  const totalAmount = calculateTotalAmount(cart.items, itemsList);
+
+  res.json({ ...cart, totalAmount });
 });
 
-// Delete Item
 app.delete("/api/cart/:userID/:itemID", (req, res) => {
   let carts = readData(CARTS_PATH);
+  const itemsList = readData(ITEMS_PATH);
+
   let cart = carts.find((c) => c.userID == req.params.userID);
 
   if (cart) {
@@ -140,32 +169,44 @@ app.delete("/api/cart/:userID/:itemID", (req, res) => {
   }
 
   writeData(CARTS_PATH, carts);
-  res.json({ success: true });
+
+  const totalAmount = cart
+    ? calculateTotalAmount(cart.items, itemsList)
+    : 0;
+
+  res.json({ success: true, totalAmount });
 });
 
-// Clear Cart
 app.delete("/api/cart/:userID", (req, res) => {
   let carts = readData(CARTS_PATH);
+
   carts = carts.map((c) =>
     c.userID == req.params.userID ? { ...c, items: {} } : c
   );
 
   writeData(CARTS_PATH, carts);
-  res.json({ success: true });
+
+  res.json({ success: true, totalAmount: 0 });
 });
 
 /* =========================
-   ORDERS (CRUD + LOGIC)
+   ORDERS (CRUD + TOTAL)
 ========================= */
 
-// Create Order
 app.post("/api/orders", (req, res) => {
   const orders = readData(ORDERS_PATH);
+  const itemsList = readData(ITEMS_PATH);
+
+  const totalAmount = calculateTotalAmount(
+    req.body.orderItems,
+    itemsList
+  );
 
   const order = {
     orderID: Date.now(),
     userID: req.body.userID,
     orderItems: req.body.orderItems,
+    totalAmount,
     orderStatus: "PENDING",
     createdAt: Date.now(),
   };
@@ -173,7 +214,6 @@ app.post("/api/orders", (req, res) => {
   orders.push(order);
   writeData(ORDERS_PATH, orders);
 
-  // Auto-complete after 1 min
   setTimeout(() => {
     let updatedOrders = readData(ORDERS_PATH);
     const o = updatedOrders.find((o) => o.orderID === order.orderID);
@@ -187,13 +227,11 @@ app.post("/api/orders", (req, res) => {
   res.json(order);
 });
 
-// Get All Orders
 app.get("/api/orders", (req, res) => {
   const orders = readData(ORDERS_PATH);
   res.json(orders);
 });
 
-// Get User Orders
 app.get("/api/orders/user/:userID", (req, res) => {
   const orders = readData(ORDERS_PATH);
   const filtered = orders.filter(
@@ -202,7 +240,6 @@ app.get("/api/orders/user/:userID", (req, res) => {
   res.json(filtered);
 });
 
-// Cancel Order
 app.delete("/api/orders/:orderID", (req, res) => {
   let orders = readData(ORDERS_PATH);
 
